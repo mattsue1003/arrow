@@ -14,32 +14,41 @@
             font-family: 'Inter', sans-serif;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+            /* (MODIFIED) 確保 body 不會捲動 */
+            overflow: hidden;
         }
 
+        /* (MODIFIED) 遊戲 wrapper 改為填滿全螢幕 */
         #game-wrapper {
-            width: 100vw;
-            height: 56.25vw; /* 16:9 aspect ratio (9 / 16 = 0.5625) */
-            max-height: 100vh;
-            max-width: 177.78vh; /* 16:9 aspect ratio (16 / 9 = 1.7778) */
-            margin: auto;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            overflow: hidden;
+            /* 移除舊的 16:9 比例設定 */
+            /* width: 100vw; */
+            /* height: 56.25vw; */
+            /* max-height: 100vh; */
+            /* max-width: 177.78vh; */
+            /* margin: auto; */
+            /* position: absolute; */
+            /* top: 50%; */
+            /* left: 50%; */
+            /* transform: translate(-50%, -50%); */
+            
+            /* (NEW) 使用 fixed position 填滿整個 viewport */
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            
+            overflow: hidden; /* 確保 wrapper 內部不捲動 */
         }
 
         /* 遊戲中的主要箭頭符號 */
         #arrow {
-            font-size: 50vmax; /* 使用 vmax 讓箭頭大小隨視窗縮放 */
-            line-height: 1; /* 調整行高讓符號置中 */
+            font-size: 50vmax; /* 維持 50vmax，這在全螢幕下運作良好 */
+            line-height: 1; 
             font-weight: bold;
             text-align: center;
-            /* 初始狀態為隱藏 (縮放為 0) */
             transform: scale(0) rotate(0deg);
-            /* 添加流暢的過場動畫 */
             transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), color 0.3s ease-in-out;
-            color: white; /* 預設顏色 */
+            color: white; 
         }
         
         /* 遊戲畫面，使用 flex 佈局 */
@@ -56,13 +65,13 @@
             position: absolute;
             inset: 0;
             background-color: rgba(0, 0, 0, 0.7);
-            display: none; /* 預設為 'none' */
+            display: none; 
             align-items: center;
             justify-content: center;
             font-size: 5rem;
             font-weight: bold;
             color: white;
-            z-index: 99; /* 必須高於遊戲畫面 (10) 但低於按鈕 (100) */
+            z-index: 99; 
         }
 
         /* 暫停按鈕容器 */
@@ -70,14 +79,14 @@
             position: absolute;
             bottom: 1.5rem;
             right: 1.5rem;
-            z-index: 100; /* 確保在最上層 */
+            z-index: 100; 
         }
     </style>
 </head>
 <body class="bg-gray-900 text-white flex items-center justify-center min-h-screen overflow-hidden">
 
-    <!-- 16:9 遊戲主容器 -->
-    <div id="game-wrapper" class="bg-black rounded-lg shadow-2xl relative">
+    <!-- (MODIFIED) 遊戲主容器，現在會填滿全螢幕 -->
+    <div id="game-wrapper" class="bg-black relative">
 
         <!-- 暫停按鈕 (預設隱藏) -->
         <div id="pause-container" class="hidden">
@@ -225,33 +234,26 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // 取得所有 DOM 元素
+            // ... (取得 DOM 元素) ...
             const settingsScreen = document.getElementById('settings-screen');
             const instructionsScreen = document.getElementById('instructions-screen');
             const gameScreen = document.getElementById('game-screen');
             const gameOverScreen = document.getElementById('game-over-screen');
-
-            // 暫停功能元素
             const pauseContainer = document.getElementById('pause-container');
             const pauseButton = document.getElementById('pause-button');
             const pauseOverlay = document.getElementById('pause-overlay');
-            
             const totalTimeInput = document.getElementById('total-time');
             const arrowDurationInput = document.getElementById('arrow-duration');
-            
             const startButton = document.getElementById('start-button');
             const playAgainButton = document.getElementById('play-again-button');
             const startAnimationButton = document.getElementById('start-animation-button');
-            
             const countdownText = document.getElementById('countdown-text');
             const gameTimerText = document.getElementById('game-timer');
             const arrow = document.getElementById('arrow');
-
-            // (NEW) 設定畫面的新元素
             const settingsError = document.getElementById('settings-error');
             const dynamicInstructionsList = document.getElementById('dynamic-instructions-list');
-
-            // 遊戲狀態變數
+            
+            // ... (遊戲狀態變數) ...
             let totalTime = 60;
             let arrowDuration = 3;
             let gameTimerInterval = null;
@@ -260,88 +262,43 @@
             let currentTimer = 0;
             let isGameRunning = false; 
             let isGameStarting = false; 
-
-            // 暫停和倒數計時狀態
             let isPaused = false;
             let countdown = 5;
 
-            // --- (MODIFIED) 箭頭設定 ---
-            // 顏色 (使用 Tailwind 顏色)
-            const arrowColors = {
-                'yellow': '#FACC15', // yellow-400
-                'white': '#FFFFFF',
-                'red': '#EF4444',   // red-500
-                'green': '#22C55E'  // green-500
-            };
-            // (NEW) 顏色中文名稱
-            const colorChineseNames = {
-                'yellow': '黃色',
-                'white': '白色',
-                'red': '紅色',
-                'green': '綠色'
-            };
-            const colorNames = Object.keys(arrowColors); // ['yellow', 'white', 'red', 'green']
-            
-            // (NEW) 遊戲進行中使用的設定
+            // ... (箭頭設定) ...
+            const arrowColors = { 'yellow': '#FACC15', 'white': '#FFFFFF', 'red': '#EF4444', 'green': '#22C55E' };
+            const colorChineseNames = { 'yellow': '黃色', 'white': '白色', 'red': '紅色', 'green': '綠色' };
+            const colorNames = Object.keys(arrowColors);
             let gameSettings = {};
             let activeColorNames = [];
+            const directions = [ 0, 90, 180, 270 ];
 
-            // 方向 (CSS 旋轉角度)
-            const directions = [
-                0,   // 右
-                90,  // 下
-                180, // 左
-                270  // 上
-            ];
-
-            // --- 音效設定 (Tone.js) ---
+            // ... (音效設定) ...
             let isAudioReady = false;
             let hitSynth; 
-
             async function setupAudio() {
                 if (isAudioReady) return;
-                
-                await Tone.start(); // 啟動音訊上下文
-                
-                // 箭頭出現的音效
+                await Tone.start(); 
                 hitSynth = new Tone.MembraneSynth({
-                    pitchDecay: 0.05,
-                    octaves: 10,
-                    oscillator: { type: "sine" },
-                    envelope: {
-                        attack: 0.001,
-                        decay: 0.4,
-                        sustain: 0.01,
-                        release: 1.4,
-                        attackCurve: "exponential"
-                    }
+                    pitchDecay: 0.05, octaves: 10, oscillator: { type: "sine" },
+                    envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 1.4, attackCurve: "exponential" }
                 }).toDestination();
-                
                 isAudioReady = true;
                 console.log("音效已準備就緒");
             }
 
-            // --- 畫面切換邏輯 ---
-
-            // 顯示指定的畫面
+            // ... (showScreen 函數) ...
             function showScreen(screenElement) {
-                // 隱藏所有畫面
-                [settingsScreen, instructionsScreen, gameScreen, gameOverScreen].forEach(s => {
-                    s.classList.add('hidden');
-                });
-                // 顯示指定畫面
+                [settingsScreen, instructionsScreen, gameScreen, gameOverScreen].forEach(s => s.classList.add('hidden'));
                 screenElement.classList.remove('hidden');
-
-                // 處理說明畫面的按鈕/文字顯示
                 if (screenElement === instructionsScreen) {
-                    startAnimationButton.classList.remove('hidden'); // 顯示按鈕
-                    countdownText.classList.add('hidden'); // 隱藏倒數
-                    countdownText.innerText = "5"; // 重置文字
-                    pauseContainer.classList.remove('hidden'); // 顯示暫停按鈕
+                    startAnimationButton.classList.remove('hidden'); 
+                    countdownText.classList.add('hidden'); 
+                    countdownText.innerText = "5"; 
+                    pauseContainer.classList.remove('hidden'); 
                 } else if (screenElement === gameScreen) {
-                    pauseContainer.classList.remove('hidden'); // 顯示暫停按鈕
+                    pauseContainer.classList.remove('hidden'); 
                 } else {
-                    // 在設定或結束畫面，強制隱藏暫停功能並重置狀態
                     pauseContainer.classList.add('hidden');
                     pauseOverlay.style.display = 'none'; 
                     isPaused = false;
@@ -352,83 +309,66 @@
             // --- 遊戲流程控制 ---
 
             // 0. 暫停/繼續 邏輯
-            function togglePause() {
+            const handleTogglePause = () => {
                 isPaused = !isPaused;
-
                 if (isPaused) {
-                    // 暫停
                     pauseButton.innerText = "繼續";
                     pauseOverlay.style.display = 'flex'; 
-
-                    // 清除所有計時器
                     if (countdownInterval) clearInterval(countdownInterval);
                     if (gameTimerInterval) clearInterval(gameTimerInterval);
                     if (gameLoopInterval) clearInterval(gameLoopInterval);
-
                 } else {
-                    // 繼續
                     pauseButton.innerText = "暫停";
                     pauseOverlay.style.display = 'none'; 
-                    
-                    // 1. 我們在說明畫面的倒數計時中 (且倒數文字是可見的)
                     if (!instructionsScreen.classList.contains('hidden') && !countdownText.classList.contains('hidden')) {
-                        startCountdownTimer(); // 繼續倒數
-                    } 
-                    // 2. 我們在主遊戲中
-                    else if (!gameScreen.classList.contains('hidden')) {
+                        startCountdownTimer(); 
+                    } else if (!gameScreen.classList.contains('hidden')) {
                         gameTimerInterval = setInterval(updateGameTimer, 1000);
                         gameLoopInterval = setInterval(generateArrow, arrowDuration * 1000);
                     }
                 }
             }
-            // 綁定暫停按鈕事件
-            pauseButton.addEventListener('click', togglePause);
+            // (MODIFIED) 綁定暫停按鈕事件
+            pauseButton.addEventListener('click', handleTogglePause);
+            pauseButton.addEventListener('touchstart', (e) => {
+                e.preventDefault(); // 防止 click 重複觸發
+                handleTogglePause();
+            });
 
 
-            // (NEW) 1.a. 從設定畫面讀取並驗證設定
+            // ... (updateGameSettings 函數) ...
             function updateGameSettings() {
                 gameSettings = {};
                 activeColorNames = [];
-                settingsError.classList.add('hidden'); // 先隱藏錯誤
-
-                for (const color of colorNames) { // colorNames is ['yellow', 'white', ...]
+                settingsError.classList.add('hidden'); 
+                for (const color of colorNames) { 
                     const toggle = document.getElementById(`color-toggle-${color}`);
                     const actionInput = document.getElementById(`color-action-${color}`);
-                    
                     if (toggle.checked) {
-                        const action = actionInput.value.trim(); // 去除前後空白
+                        const action = actionInput.value.trim(); 
                         activeColorNames.push(color);
                         gameSettings[color] = {
-                            // 如果使用者清空了文字，提供一個預設值
                             action: action || `[${colorChineseNames[color]}]`, 
                             hex: arrowColors[color],
                             name: colorChineseNames[color]
                         };
                     }
                 }
-
-                // 錯誤檢查：必須至少選一個
                 if (activeColorNames.length === 0) {
                     settingsError.classList.remove('hidden');
-                    return false; // 回傳 false 表示失敗
+                    return false; 
                 }
-                
-                return true; // 回傳 true 表示成功
+                return true; 
             }
 
-            // (NEW) 1.b. 根據設定動態產生說明
+            // ... (populateInstructions 函數) ...
             function populateInstructions() {
-                dynamicInstructionsList.innerHTML = ''; // 清空
-
+                dynamicInstructionsList.innerHTML = ''; 
                 for (const color of activeColorNames) {
                     const data = gameSettings[color];
-                    
                     const li = document.createElement('li');
                     li.className = "flex items-center space-x-3";
-                    
-                    // 處理白色箭頭的邊框
                     const borderClass = (color === 'white') ? 'border-2 border-gray-400' : '';
-
                     li.innerHTML = `
                         <span class="w-6 h-6 rounded-full flex-shrink-0 ${borderClass}" style="background-color: ${data.hex};"></span>
                         <span>
@@ -442,12 +382,10 @@
 
 
             // 1. 點擊「開始遊戲」按鈕 (MODIFIED)
-            startButton.addEventListener('click', async () => {
+            const handleStartGame = async () => {
                 if (isGameStarting) return;
                 isGameStarting = true; 
-
                 try {
-                    // 初始化音效 (必須由用戶操作觸發)
                     if (!isAudioReady) {
                         await setupAudio();
                     }
@@ -456,55 +394,51 @@
                     isGameStarting = false;
                     return;
                 }
-
-                // 獲取基本設定值
                 totalTime = parseInt(totalTimeInput.value, 10) || 60;
                 arrowDuration = parseFloat(arrowDurationInput.value) || 3;
-                
-                // (NEW) 1. 更新並驗證遊戲設定
                 if (!updateGameSettings()) {
-                    isGameStarting = false; // 重置
-                    return; // 驗證失敗，停止
+                    isGameStarting = false; 
+                    return; 
                 }
-
-                // (NEW) 2. 產生動態說明
                 populateInstructions();
-
-                // (EXISTING) 3. 顯示說明畫面
                 showScreen(instructionsScreen);
+            };
+            startButton.addEventListener('click', handleStartGame);
+            startButton.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                handleStartGame();
             });
 
-            // 1.5. 點擊「遊戲動畫開始」按鈕
-            startAnimationButton.addEventListener('click', () => {
-                // 隱藏自己，顯示倒數文字
+
+            // 1.5. 點擊「遊戲動畫開始」按鈕 (MODIFIED)
+            const handleStartAnimation = () => {
                 startAnimationButton.classList.add('hidden');
                 countdownText.classList.remove('hidden');
-
-                countdown = 5; // 重置倒數計時
+                countdown = 5; 
                 countdownText.innerText = "5";
-                if (isAudioReady) hitSynth.triggerAttackRelease("C3", "8n"); // 播放 '5' 的聲音
-                
-                startCountdownTimer(); // 呼叫獨立的計時器函數
+                if (isAudioReady) hitSynth.triggerAttackRelease("C3", "8n"); 
+                startCountdownTimer(); 
+            };
+            startAnimationButton.addEventListener('click', handleStartAnimation);
+            startAnimationButton.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                handleStartAnimation();
             });
+
 
             // 1.6. 倒數計時器函數 (可被暫停)
             function startCountdownTimer() {
-                if (countdownInterval) clearInterval(countdownInterval); // 清除舊的
-
+                if (countdownInterval) clearInterval(countdownInterval); 
                 countdownInterval = setInterval(() => {
-                    countdown--; // 倒數 4, 3, 2, 1...
+                    countdown--; 
                     if (countdown > 0) {
                         countdownText.innerText = countdown;
-                        // 倒數音效
                         if (isAudioReady) hitSynth.triggerAttackRelease("C3", "8n");
                     } else {
-                        // 倒數結束 (countdown is 0)
                         clearInterval(countdownInterval);
-                        countdownInterval = null; // 清除 ID
+                        countdownInterval = null; 
                         countdownText.innerText = "GO!";
-                        // 準備音效
                         if (isAudioReady) hitSynth.triggerAttackRelease("C4", "4n"); 
-                        // 稍待一會，然後開始遊戲
                         setTimeout(startGame, 500);
                     }
                 }, 1000);
@@ -518,12 +452,7 @@
                 currentTimer = totalTime;
                 gameTimerText.innerText = `時間: ${currentTimer}`;
                 showScreen(gameScreen);
-
-                // 啟動遊戲計時器 (每秒更新)
                 gameTimerInterval = setInterval(updateGameTimer, 1000);
-                
-                // 啟動遊戲主循環 (產生箭頭)
-                // 立刻產生第一個箭頭
                 generateArrow(); 
                 gameLoopInterval = setInterval(generateArrow, arrowDuration * 1000);
             }
@@ -532,80 +461,63 @@
             function updateGameTimer() {
                 currentTimer--;
                 gameTimerText.innerText = `時間: ${currentTimer}`;
-                
                 if (currentTimer <= 0) {
-                    endGame(); // 時間到，結束遊戲
+                    endGame(); 
                 }
             }
 
-            // 4. 產生新箭頭 (MODIFIED)
+            // 4. 產生新箭頭
             function generateArrow() {
                 if (!isGameRunning) return;
-
-                // (NEW) 檢查是否有可用的顏色
                 if (activeColorNames.length === 0) {
                     console.error("沒有可用的顏色！遊戲無法產生箭頭。");
-                    endGame(); // 沒有顏色，強制結束遊戲
+                    endGame(); 
                     return; 
                 }
-
-                // (MODIFIED) 隨機選擇 "已啟用" 的顏色
                 const randomColorName = activeColorNames[Math.floor(Math.random() * activeColorNames.length)];
                 const randomDirection = directions[Math.floor(Math.random() * directions.length)];
-                
                 const colorHex = arrowColors[randomColorName];
-
-                // 先縮小箭頭 (製造 "消失" 效果)
-                arrow.style.transform = 'scale(0) rotate(0deg)'; // 復位旋轉再縮小
-                
-                // 延遲短暫時間後，顯示新箭頭
+                arrow.style.transform = 'scale(0) rotate(0deg)'; 
                 setTimeout(() => {
                     if (!isGameRunning) return;
-
-                    // 設置新箭頭的顏色和方向
                     arrow.style.color = colorHex;
-                    arrow.style.transform = `scale(0.85) rotate(${randomDirection}deg)`; // 縮放 0.85 (不要滿版)
-                    
-                    // 播放箭頭出現音效
+                    arrow.style.transform = `scale(0.85) rotate(${randomDirection}deg)`; 
                     if (isAudioReady) {
                         hitSynth.triggerAttackRelease("G2", "8n");
                     }
-                }, 200); // 0.2 秒後出現
+                }, 200); 
             }
 
             // 5. 結束遊戲
             function endGame() {
                 isGameRunning = false; 
-
-                // 清除所有計時器
                 if (gameTimerInterval) clearInterval(gameTimerInterval);
                 if (gameLoopInterval) clearInterval(gameLoopInterval);
                 if (countdownInterval) clearInterval(countdownInterval); 
                 gameTimerInterval = null; 
                 gameLoopInterval = null; 
                 countdownInterval = null; 
-                
-                // 隱藏箭頭
                 arrow.style.transform = 'scale(0)';
-                
-                // 顯示結束畫面
                 showScreen(gameOverScreen);
             }
 
-            // 6. 點擊「再玩一次」
-            playAgainButton.addEventListener('click', () => {
+            // 6. 點擊「再玩一次」 (MODIFIED)
+            const handlePlayAgain = () => {
                 showScreen(settingsScreen);
                 isGameRunning = false; 
                 isGameStarting = false; 
-                // 重置倒數計時文字
                 countdownText.innerText = "5";
-                // 確保清除殘留的計時器
                 if (gameTimerInterval) clearInterval(gameTimerInterval);
                 if (gameLoopInterval) clearInterval(gameLoopInterval);
                 if (countdownInterval) clearInterval(countdownInterval);
                 gameTimerInterval = null;
                 gameLoopInterval = null;
                 countdownInterval = null;
+            };
+            playAgainButton.addEventListener('click', handlePlayAgain);
+            playAgainButton.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                handlePlayAgain();
             });
 
             // 初始顯示設定畫面
@@ -614,7 +526,4 @@
     </script>
 </body>
 </html>
-
-
-
 
