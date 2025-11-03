@@ -42,7 +42,7 @@
 
         /* 遊戲中的主要箭頭符號 */
         #arrow {
-            font-size: 50vmax; /* 維持 50vmax，這在全螢幕下運作良好 */
+            font-size: 50vmin; /* (MODIFIED) 從 vmax 改為 vmin (最小可視區)，修復手機版面問題 */
             line-height: 1; 
             font-weight: bold;
             text-align: center;
@@ -103,88 +103,103 @@
 
 
         <!-- 畫面 1: 設定畫面 (MODIFIED) -->
-        <div id="settings-screen" class="game-screen justify-start absolute inset-0 p-4 md:p-8 space-y-4 z-30 bg-gray-900 overflow-y-auto">
-            <h1 class="text-4xl md:text-6xl font-bold text-blue-400">箭頭體智動畫大挑戰</h1>
-            <p class="text-xl md:text-2xl text-gray-300">設定你的遊戲參數</p>
+        <!-- (MODIFIED) 重構版面：
+             - 移除 'justify-start', 'space-y-4', 'p-4', 'overflow-y-auto'
+             - 讓 flex 容器 (game-screen) 填滿高度
+        -->
+        <div id="settings-screen" class="game-screen absolute inset-0 z-30 bg-gray-900 h-full">
             
-            <!-- (NEW) 新增作者和書籍連結 -->
-            <div class="text-center text-lg text-gray-300 space-y-1">
-                <p>
-                    設計者：<a href="https://www.facebook.com/chungmenghsiu" target="_blank" rel="noopener noreferrer"
-                           class="text-blue-300 hover:text-blue-200 underline">鍾孟修 職能治療師</a>
-                </p>
-                <p>
-                    追蹤粉絲專頁 <a href="https://www.facebook.com/profile.php?id=100063748491881#" target="_blank" rel="noopener noreferrer"
-                           class="text-blue-300 hover:text-blue-200 underline">鍾孟修Ｍatt-職能治療師</a>
-                </p>
-                <p>
-                    新書「<a href="https://www.books.com.tw/products/0011022363?sloc=main" target="_blank" rel="noopener noreferrer"
-                           class="text-blue-300 hover:text-blue-200 underline">讓你健康不失智的體智能</a>」
-                </p>
-            </div>
+            <!-- (NEW) 新增一個可滾動的內容容器 -->
+            <div class="flex-grow overflow-y-auto w-full p-4 md:p-8 flex flex-col items-center space-y-4">
 
-            <!-- 基本設定 -->
-            <div class="space-y-4 w-full max-w-sm">
-                <div>
-                    <label for="total-time" class="block text-lg font-medium text-gray-200 mb-2">
-                        遊戲總時間 (秒)
-                    </label>
-                    <input type="number" id="total-time" value="60" min="10" 
-                           class="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white text-xl text-center focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <h1 class="text-4xl md:text-6xl font-bold text-blue-400">箭頭體智動畫大挑戰</h1>
+                <p class="text-xl md:text-2xl text-gray-300">設定你的遊戲參數</p>
+                
+                <!-- (NEW) 新增作者和書籍連結 -->
+                <div class="text-center text-lg text-gray-300 space-y-1">
+                    <p>
+                        設計者：<a href="https://www.facebook.com/chungmenghsiu" target="_blank" rel="noopener noreferrer"
+                               class="text-blue-300 hover:text-blue-200 underline">鍾孟修 職能治療師</a>
+                    </p>
+                    <p>
+                        追蹤粉絲專頁 <a href="https://www.facebook.com/profile.php?id=100063748491881#" target="_blank" rel="noopener noreferrer"
+                               class="text-blue-300 hover:text-blue-200 underline">鍾孟修Ｍatt-職能治療師</a>
+                    </p>
+                    <p>
+                        新書「<a href="https://www.books.com.tw/products/0011022363?sloc=main" target="_blank" rel="noopener noreferrer"
+                               class="text-blue-300 hover:text-blue-200 underline">讓你健康不失智的體智能</a>」
+                    </p>
+                </div>
+
+                <!-- 基本設定 -->
+                <div class="space-y-4 w-full max-w-sm">
+                    <div>
+                        <label for="total-time" class="block text-lg font-medium text-gray-200 mb-2">
+                            遊戲總時間 (秒)
+                        </label>
+                        <input type="number" id="total-time" value="60" min="10" 
+                               class="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white text-xl text-center focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label for="arrow-duration" class="block text-lg font-medium text-gray-200 mb-2">
+                            箭頭顯示間隔 (秒)
+                        </label>
+                        <input type="number" id="arrow-duration" value="3" min="1" step="0.5"
+                               class="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white text-xl text-center focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
                 </div>
                 
-                <div>
-                    <label for="arrow-duration" class="block text-lg font-medium text-gray-200 mb-2">
-                        箭頭顯示間隔 (秒)
-                    </label>
-                    <input type="number" id="arrow-duration" value="3" min="1" step="0.5"
-                           class="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white text-xl text-center focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <!-- (NEW) 顏色與動作設定 -->
+                <div class="space-y-4 w-full max-w-lg bg-gray-800 p-4 rounded-lg border border-gray-700">
+                    <h3 class="text-xl font-semibold text-center text-blue-300 mb-3">顏色與動作設定 (至少選一項)</h3>
+                    
+                    <!-- 黃色 -->
+                    <div class="flex items-center space-x-3">
+                        <input type="checkbox" id="color-toggle-yellow" class="w-5 h-5 rounded text-blue-500 focus:ring-blue-500" checked>
+                        <span class="w-6 h-6 rounded-full" style="background-color: #FACC15;"></span>
+                        <label for="color-toggle-yellow" class="text-lg text-yellow-400 w-16 flex-shrink-0">黃色</label>
+                        <input type="text" id="color-action-yellow" value="右手比方向" class="flex-1 p-2 bg-gray-700 border border-gray-600 rounded-md text-white text-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <!-- 白色 -->
+                    <div class="flex items-center space-x-3">
+                        <input type="checkbox" id="color-toggle-white" class="w-5 h-5 rounded text-blue-500 focus:ring-blue-500" checked>
+                        <span class="w-6 h-6 rounded-full border border-gray-400" style="background-color: #FFFFFF;"></span>
+                        <label for="color-toggle-white" class="text-lg text-white w-16 flex-shrink-0">白色</label>
+                        <input type="text" id="color-action-white" value="左手比方向" class="flex-1 p-2 bg-gray-700 border border-gray-600 rounded-md text-white text-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <!-- 紅色 -->
+                    <div class="flex items-center space-x-3">
+                        <input type="checkbox" id="color-toggle-red" class="w-5 h-5 rounded text-blue-500 focus:ring-blue-500" checked>
+                        <span class="w-6 h-6 rounded-full" style="background-color: #EF4444;"></span>
+                        <label for="color-toggle-red" class="text-lg text-red-400 w-16 flex-shrink-0">紅色</label>
+                        <input type="text" id="color-action-red" value="頭轉方向" class="flex-1 p-2 bg-gray-700 border border-gray-600 rounded-md text-white text-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <!-- 綠色 -->
+                    <div class="flex items-center space-x-3">
+                        <input type="checkbox" id="color-toggle-green" class="w-5 h-5 rounded text-blue-500 focus:ring-blue-500" checked>
+                        <span class="w-6 h-6 rounded-full" style="background-color: #22C55E;"></span>
+                        <label for="color-toggle-green" class="text-lg text-green-400 w-16 flex-shrink-0">綠色</label>
+                        <input type="text" id="color-action-green" value="嘴巴說方向" class="flex-1 p-2 bg-gray-700 border border-gray-600 rounded-md text-white text-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
                 </div>
-            </div>
-            
-            <!-- (NEW) 顏色與動作設定 -->
-            <div class="space-y-4 w-full max-w-lg bg-gray-800 p-4 rounded-lg border border-gray-700">
-                <h3 class="text-xl font-semibold text-center text-blue-300 mb-3">顏色與動作設定 (至少選一項)</h3>
-                
-                <!-- 黃色 -->
-                <div class="flex items-center space-x-3">
-                    <input type="checkbox" id="color-toggle-yellow" class="w-5 h-5 rounded text-blue-500 focus:ring-blue-500" checked>
-                    <span class="w-6 h-6 rounded-full" style="background-color: #FACC15;"></span>
-                    <label for="color-toggle-yellow" class="text-lg text-yellow-400 w-16 flex-shrink-0">黃色</label>
-                    <input type="text" id="color-action-yellow" value="右手比方向" class="flex-1 p-2 bg-gray-700 border border-gray-600 rounded-md text-white text-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+                <!-- (NEW) 錯誤訊息 -->
+                <div id="settings-error" class="text-red-400 text-lg font-medium hidden">
+                    請至少選擇一種箭頭顏色！
                 </div>
-                <!-- 白色 -->
-                <div class="flex items-center space-x-3">
-                    <input type="checkbox" id="color-toggle-white" class="w-5 h-5 rounded text-blue-500 focus:ring-blue-500" checked>
-                    <span class="w-6 h-6 rounded-full border border-gray-400" style="background-color: #FFFFFF;"></span>
-                    <label for="color-toggle-white" class="text-lg text-white w-16 flex-shrink-0">白色</label>
-                    <input type="text" id="color-action-white" value="左手比方向" class="flex-1 p-2 bg-gray-700 border border-gray-600 rounded-md text-white text-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-                <!-- 紅色 -->
-                <div class="flex items-center space-x-3">
-                    <input type="checkbox" id="color-toggle-red" class="w-5 h-5 rounded text-blue-500 focus:ring-blue-500" checked>
-                    <span class="w-6 h-6 rounded-full" style="background-color: #EF4444;"></span>
-                    <label for="color-toggle-red" class="text-lg text-red-400 w-16 flex-shrink-0">紅色</label>
-                    <input type="text" id="color-action-red" value="頭轉方向" class="flex-1 p-2 bg-gray-700 border border-gray-600 rounded-md text-white text-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-                <!-- 綠色 -->
-                <div class="flex items-center space-x-3">
-                    <input type="checkbox" id="color-toggle-green" class="w-5 h-5 rounded text-blue-500 focus:ring-blue-500" checked>
-                    <span class="w-6 h-6 rounded-full" style="background-color: #22C55E;"></span>
-                    <label for="color-toggle-green" class="text-lg text-green-400 w-16 flex-shrink-0">綠色</label>
-                    <input type="text" id="color-action-green" value="嘴巴說方向" class="flex-1 p-2 bg-gray-700 border border-gray-600 rounded-md text-white text-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
+
+                <!-- (NEW) 增加一個空白間隔，確保滾動到底部時，最後的元素不會黏在按鈕上 -->
+                <div class="h-4 flex-shrink-0"></div>
             </div>
 
-            <!-- (NEW) 錯誤訊息 -->
-            <div id="settings-error" class="text-red-400 text-lg font-medium hidden">
-                請至少選擇一種箭頭顏色！
+            <!-- (NEW) 固定的底部按鈕容器 -->
+            <div class="flex-shrink-0 w-full p-4 bg-gray-900 border-t border-gray-700">
+                <button id="start-button" 
+                        class="w-full max-w-lg mx-auto px-10 py-4 bg-blue-600 hover:bg-blue-700 rounded-lg text-2xl font-bold transition-transform transform hover:scale-105 shadow-lg flex items-center justify-center">
+                    開始遊戲
+                </button>
             </div>
-            
-            <button id="start-button" 
-                    class="px-10 py-4 bg-blue-600 hover:bg-blue-700 rounded-lg text-2xl font-bold transition-transform transform hover:scale-105 shadow-lg">
-                開始遊戲
-            </button>
         </div>
 
         <!-- 畫面 2: 說明畫面 (MODIFIED) -->
@@ -526,4 +541,5 @@
     </script>
 </body>
 </html>
+
 
