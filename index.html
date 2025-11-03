@@ -293,20 +293,18 @@
             // ... (音效設定) ...
             let isAudioReady = false;
             let hitSynth; 
-            async function setupAudio() {
-                if (isAudioReady) return;
-                // (MODIFIED) 增加 try-catch 確保 Tone.start() 成功
+            // (MODIFIED) 改為同步函數，僅建立合成器
+            function createSynths() {
+                // if (isAudioReady) return; // 檢查已移至 handleStartGame
                 try {
-                    await Tone.start(); 
                     hitSynth = new Tone.MembraneSynth({
                         pitchDecay: 0.05, octaves: 10, oscillator: { type: "sine" },
                         envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 1.4, attackCurve: "exponential" }
                     }).toDestination();
                     isAudioReady = true;
-                    console.log("音效已準備就緒");
+                    console.log("音效合成器已建立");
                 } catch (e) {
-                    console.error("Tone.js 啟動失敗:", e);
-                    // 即使音效失敗，也允許遊戲繼續 (雖然會沒有聲音)
+                    console.error("Tone.js 合成器建立失敗:", e);
                     isAudioReady = false; 
                 }
             }
@@ -406,17 +404,27 @@
 
 
             // 1. 點擊「開始遊戲」按鈕 (MODIFIED)
-            const handleStartGame = async () => {
+            // (MODIFIED) 移除 async，改為同步函數，以符合 Chrome 音效政策
+            const handleStartGame = () => {
                 if (isGameStarting) return;
                 isGameStarting = true; 
-                try {
-                    if (!isAudioReady) {
-                        await setupAudio();
-                    }
-                } catch (err) {
-                    console.error("音效初始化失敗:", err);
-                    // 即使音效失敗，也繼續，只是沒有聲音
+                
+                // (NEW) 針對 Chrome 音效政策的修改
+                // 必須在同步點擊事件中呼叫 Tone.start()
+                if (!isAudioReady) {
+                    Tone.start().then(() => {
+                        // 音效啟動成功後，在背景建立合成器
+                        console.log("音效已啟動 (Tone.start())");
+                        createSynths();
+                    }).catch(err => {
+                        console.error("音效初始化失敗 (Tone.start()):", err);
+                        isAudioReady = false; 
+                    });
                 }
+                
+                // (MODIFIED) 移除 try/catch 和 await setupAudio()
+                // 遊戲邏輯立刻繼續執行，不需要等待音效
+                
                 totalTime = parseInt(totalTimeInput.value, 10) || 60;
                 arrowDuration = parseFloat(arrowDurationInput.value) || 3;
                 if (!updateGameSettings()) {
@@ -549,3 +557,4 @@
     </script>
 </body>
 </html>
+
