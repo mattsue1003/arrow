@@ -10,27 +10,26 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
     
     <style>
+        /* (NEW) 真正鎖定 viewport，防止手機捲動和 100vh 問題 */
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            /* 關鍵：鎖定 body 和 html，使其無法捲動 */
+            position: fixed; 
+        }
+
         body {
             font-family: 'Inter', sans-serif;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
-            /* (MODIFIED) 確保 body 不會捲動 */
-            overflow: hidden;
+            /* (MODIFIED) 移除 overflow: hidden，已在上面的 html, body 中設定 */
         }
 
         /* (MODIFIED) 遊戲 wrapper 改為填滿全螢幕 */
         #game-wrapper {
-            /* 移除舊的 16:9 比例設定 */
-            /* width: 100vw; */
-            /* height: 56.25vw; */
-            /* max-height: 100vh; */
-            /* max-width: 177.78vh; */
-            /* margin: auto; */
-            /* position: absolute; */
-            /* top: 50%; */
-            /* left: 50%; */
-            /* transform: translate(-50%, -50%); */
-            
             /* (NEW) 使用 fixed position 填滿整個 viewport */
             position: fixed;
             inset: 0;
@@ -83,7 +82,14 @@
         }
     </style>
 </head>
-<body class="bg-gray-900 text-white flex items-center justify-center min-h-screen overflow-hidden">
+<!-- 
+  (MODIFIED) 
+  移除了 body 上的 'flex items-center justify-center min-h-screen overflow-hidden'
+  - 'flex/items-center/justify-center' 是多餘的，因為 #game-wrapper 是 position: fixed
+  - 'min-h-screen' (100vh) 是造成手機版面問題的主因
+  - 'overflow-hidden' 已經由 <style> 中的 'html, body' 規則處理
+-->
+<body class="bg-gray-900 text-white">
 
     <!-- (MODIFIED) 遊戲主容器，現在會填滿全螢幕 -->
     <div id="game-wrapper" class="bg-black relative">
@@ -103,10 +109,6 @@
 
 
         <!-- 畫面 1: 設定畫面 (MODIFIED) -->
-        <!-- (MODIFIED) 重構版面：
-             - 移除 'justify-start', 'space-y-4', 'p-4', 'overflow-y-auto'
-             - 讓 flex 容器 (game-screen) 填滿高度
-        -->
         <div id="settings-screen" class="game-screen absolute inset-0 z-30 bg-gray-900 h-full">
             
             <!-- (NEW) 新增一個可滾動的內容容器 -->
@@ -119,15 +121,15 @@
                 <div class="text-center text-lg text-gray-300 space-y-1">
                     <p>
                         設計者：<a href="https://www.facebook.com/chungmenghsiu" target="_blank" rel="noopener noreferrer"
-                               class="text-blue-300 hover:text-blue-200 underline">鍾孟修 職能治療師</a>
+                                class="text-blue-300 hover:text-blue-200 underline">鍾孟修 職能治療師</a>
                     </p>
                     <p>
                         追蹤粉絲專頁 <a href="https://www.facebook.com/profile.php?id=100063748491881#" target="_blank" rel="noopener noreferrer"
-                               class="text-blue-300 hover:text-blue-200 underline">鍾孟修Ｍatt-職能治療師</a>
+                                class="text-blue-300 hover:text-blue-200 underline">鍾孟修Ｍatt-職能治療師</a>
                     </p>
                     <p>
                         新書「<a href="https://www.books.com.tw/products/0011022363?sloc=main" target="_blank" rel="noopener noreferrer"
-                               class="text-blue-300 hover:text-blue-200 underline">讓你健康不失智的體智能</a>」
+                                class="text-blue-300 hover:text-blue-200 underline">讓你健康不失智的體智能</a>」
                     </p>
                 </div>
 
@@ -293,13 +295,20 @@
             let hitSynth; 
             async function setupAudio() {
                 if (isAudioReady) return;
-                await Tone.start(); 
-                hitSynth = new Tone.MembraneSynth({
-                    pitchDecay: 0.05, octaves: 10, oscillator: { type: "sine" },
-                    envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 1.4, attackCurve: "exponential" }
-                }).toDestination();
-                isAudioReady = true;
-                console.log("音效已準備就緒");
+                // (MODIFIED) 增加 try-catch 確保 Tone.start() 成功
+                try {
+                    await Tone.start(); 
+                    hitSynth = new Tone.MembraneSynth({
+                        pitchDecay: 0.05, octaves: 10, oscillator: { type: "sine" },
+                        envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 1.4, attackCurve: "exponential" }
+                    }).toDestination();
+                    isAudioReady = true;
+                    console.log("音效已準備就緒");
+                } catch (e) {
+                    console.error("Tone.js 啟動失敗:", e);
+                    // 即使音效失敗，也允許遊戲繼續 (雖然會沒有聲音)
+                    isAudioReady = false; 
+                }
             }
 
             // ... (showScreen 函數) ...
@@ -406,8 +415,7 @@
                     }
                 } catch (err) {
                     console.error("音效初始化失敗:", err);
-                    isGameStarting = false;
-                    return;
+                    // 即使音效失敗，也繼續，只是沒有聲音
                 }
                 totalTime = parseInt(totalTimeInput.value, 10) || 60;
                 arrowDuration = parseFloat(arrowDurationInput.value) || 3;
@@ -431,7 +439,7 @@
                 countdownText.classList.remove('hidden');
                 countdown = 5; 
                 countdownText.innerText = "5";
-                if (isAudioReady) hitSynth.triggerAttackRelease("C3", "8n"); 
+                if (isAudioReady && hitSynth) hitSynth.triggerAttackRelease("C3", "8n"); 
                 startCountdownTimer(); 
             };
             startAnimationButton.addEventListener('click', handleStartAnimation);
@@ -448,12 +456,12 @@
                     countdown--; 
                     if (countdown > 0) {
                         countdownText.innerText = countdown;
-                        if (isAudioReady) hitSynth.triggerAttackRelease("C3", "8n");
+                        if (isAudioReady && hitSynth) hitSynth.triggerAttackRelease("C3", "8n");
                     } else {
                         clearInterval(countdownInterval);
                         countdownInterval = null; 
                         countdownText.innerText = "GO!";
-                        if (isAudioReady) hitSynth.triggerAttackRelease("C4", "4n"); 
+                        if (isAudioReady && hitSynth) hitSynth.triggerAttackRelease("C4", "4n"); 
                         setTimeout(startGame, 500);
                     }
                 }, 1000);
@@ -494,10 +502,10 @@
                 const colorHex = arrowColors[randomColorName];
                 arrow.style.transform = 'scale(0) rotate(0deg)'; 
                 setTimeout(() => {
-                    if (!isGameRunning) return;
+                    if (!isGameRunning || isPaused) return; // (MODIFIED) 增加 isPaused 檢查
                     arrow.style.color = colorHex;
                     arrow.style.transform = `scale(0.85) rotate(${randomDirection}deg)`; 
-                    if (isAudioReady) {
+                    if (isAudioReady && hitSynth) {
                         hitSynth.triggerAttackRelease("G2", "8n");
                     }
                 }, 200); 
@@ -541,5 +549,3 @@
     </script>
 </body>
 </html>
-
-
